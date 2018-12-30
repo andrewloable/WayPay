@@ -1,0 +1,95 @@
+{{define "header_secure"}}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>WayPay by LoableTech</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" type="image/png" href="/assets/img/favicon.ico">
+    <link rel="stylesheet" href="/assets/css/angular-material.css">
+    <link rel="stylesheet" href="/assets/css/md-data-table.css">
+    <link rel="stylesheet" href="/assets/css/select2.css">
+    <link rel="stylesheet" href="/assets/css/bootstrap.css">
+    <script src="/assets/js/jquery.js"></script>
+    <script src="/assets/js/angular.js"></script>
+    <script src="/assets/js/angular-route.js"></script>
+    <script src="/assets/js/angular-animate.js"></script>
+    <script src="/assets/js/angular-aria.js"></script>
+    <script src="/assets/js/angular-messages.js"></script>
+    <script src="/assets/js/angular-sanitize.js"></script>
+    <script src="/assets/js/angular-material.js"></script>
+    <script src="/assets/js/async.js"></script>
+    <script src="/assets/js/md-data-table.js"></script>
+    <script src="/assets/js/ui-bootstrap-tpls.js"></script>
+    <script src="/assets/js/select2.js"></script>
+    <script src="/assets/js/angular-select2.js"></script>
+    <script src="/assets/js/aes.js"></script>
+    <script src="/assets/js/moment.js"></script>  
+    <script src="/assets/js/app.js"></script>
+</head>
+<script>
+    angular.module('WayPay').controller('secure', ["$mdSidenav", "$mdToast", function ($mdSidenav, $mdToast) {
+            var app = this;
+            app.isLoggedIn = true;
+            console.log("%cSecure", "background: red; color: yellow; font-size: 40px;");
+            console.log("%c(c) 2017 - 2018 Loable Technologies https://loable.tech",
+            "background: white; color: darkblue; font-size: 15px;");
+            app.ToggleMenu = function () {
+                $mdSidenav('mainNav').toggle();
+            };
+            app.LogOut = function () {
+                window.open("/login", "_self");
+            };
+            app.Navigate = function (url) {
+                window.open(url, "_self");
+            };
+
+            
+            {{ if .hasError}}
+            $mdToast.show(
+                $mdToast.simple()
+                .textContent("{{.message}}")
+                .position("top right")
+                .hideDelay(5000)
+            );
+            {{ end }}
+        }]);
+</script>
+
+<body ng-app="WayPay" ng-controller="secure as app" ng-cloak layout-fill layout="column" style="width: 100%; height: 100vh;">
+    <md-toolbar class="md-primary">
+        <div class="md-toolbar-tools">
+            <md-button ng-if="app.isLoggedIn" class="md-icon-button" ng-click="app.ToggleMenu()" aria-label="Toggle Menu">
+                <md-icon md-svg-src="/assets/img/menu.svg"></md-icon>
+            </md-button>
+            <h2 flex>WayPay by LoableTech</h2>
+            <md-button ng-if="app.isLoggedIn" class="md-icon-button" ng-click="app.LogOut()" aria-label="Log Out">
+                <md-icon md-svg-src="/assets/img/logout.svg"></md-icon>
+                <md-tooltip md-direction="left">Log Out</md-tooltip>
+            </md-button>
+        </div>        
+    </md-toolbar>
+    <md-content style="min-height: 90vh">
+        <div layout="row" flex>
+            <div layout="column">
+                <md-sidenav ng-if="app.isLoggedIn" class="md-sidenav-left md-whiteframe-4dp" md-component-id="mainNav">
+                    <md-content layout-padding>
+                        <!-- TODO Menu Here -->
+                        <div layout="column">
+                            <md-button class="md-raised md-primary" flex ng-click="app.Navigate('/')">Dashboard</md-button>
+                        </div>
+                        <uib-accordion close-others="true">
+                            {{range .menu}}
+                            <div uib-accordion-group class="panel-default" heading="{{.Group}}">
+                                {{range .Items}}
+                                <div layout="column">
+                                    <md-button class="md-raised md-primary" ng-click="app.Navigate('{{.Path}}')">{{.Name}}</md-button>
+                                </div>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </uib-accordion>
+                    </md-content>
+                </md-sidenav>
+            </div> {{end}}

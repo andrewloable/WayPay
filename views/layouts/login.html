@@ -1,0 +1,44 @@
+{{template "header_not_secure" .}}
+<script>
+    angular.module('WayPay')
+        .controller('login', ["$mdSidenav", "$mdToast", function ($mdSidenav, $mdToast) {
+            var app = this;
+
+            console.log("%cLogin", "background: red; color: yellow; font-size: 40px;");
+            console.log("%c(c) 2017 - 2018 Loable Technologies https://loable.tech", "background: white; color: darkblue; font-size: 15px;");
+
+        }]);
+</script>
+<div layout="column" layout-align="center center" layout-fill="layout-fill" ng-cloak ng-controller="login" style="margin-top:40px;">
+    <div layout="column" class="md-whiteframe-z1" style="max-width: 90%; width: 500px;">
+        <md-toolbar>
+            <h2 class="md-toolbar-tools">
+                <span>Login</span>
+            </h2>
+        </md-toolbar>
+        <form method="post" action="/login" name="login-form">
+            <md-content layout="column" class="md-padding">
+                <md-input-container>
+                    <label>Username</label>
+                    <input type="text" name="Username" placeholder="User Name" autocomplete="on" required>
+                    <div ng-messages="login-form.Username.$error">
+                        <div ng-message="required">This is required</div>
+                    </div>
+                </md-input-container>
+                <md-input-container>
+                    <label>Password</label>
+                    <input type="password" name="Password" required>
+                    <div ng-messages="login-form.Password.$error">
+                        <div ng-message="required">This is required</div>
+                    </div>
+                </md-input-container>
+                <div layout="row" layout-align="center center">
+                    <button type="submit" class="md-button md-raised md-primary">Login</button>
+                </div>
+                <md-divider></md-divider>
+                <h5>Forgot your email and password? Please contact the Technical Support.</h5>
+            </md-content>
+        </form>
+    </div>
+</div>
+{{template "footer_not_secure"}}

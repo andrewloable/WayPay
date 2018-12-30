@@ -1,0 +1,51 @@
+{{define "header_not_secure"}}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>{{.companeName}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" type="image/png" href="{{.companyLogo}}">
+    <link rel="stylesheet" href="/assets/css/angular-material.css">
+    <link rel="stylesheet" href="/assets/css/md-data-table.css">
+    <link rel="stylesheet" href="/assets/css/bootstrap.css">
+    <script src="/assets/js/angular.js"></script>
+    <script src="/assets/js/angular-route.js"></script>
+    <script src="/assets/js/angular-animate.js"></script>
+    <script src="/assets/js/angular-aria.js"></script>
+    <script src="/assets/js/angular-messages.js"></script>
+    <script src="/assets/js/angular-sanitize.js"></script>
+    <script src="/assets/js/angular-material.js"></script>
+    <script src="/assets/js/md-data-table.js"></script>
+    <script src="/assets/js/ui-bootstrap-tpls.js"></script>
+    <script src="/assets/js/app.js"></script>
+</head>
+<script>
+    angular.module('WayPay')
+        .controller('nonsecure', ["$mdToast", function ($mdToast) {
+            var app = this;
+
+            console.log("%cNot Secure", "background: red; color: yellow; font-size: 40px;");
+            console.log("%c(c) 2017 - 2018 Loable Technologies https://loable.tech", "background: white; color: darkblue; font-size: 15px;");
+
+            {{ if .hasError}}
+            $mdToast.show(
+                $mdToast.simple()
+                .textContent("{{.message}}")
+                .position("top right")
+                .hideDelay(5000)
+            );
+            {{ end }}
+        }]);
+</script>
+
+<body ng-app="WayPay" ng-controller="nonsecure as app" ng-cloak layout-fill layout="column" style="width: 100%; height: 100vh;">
+    <md-toolbar class="md-primary">
+        <div class="md-toolbar-tools">
+            <h2 flex>WayPay by LoableTech</h2>
+        </div>
+        <md-progress-linear md-mode="indeterminate" ng-show="waiting"></md-progress-linear>
+    </md-toolbar>
+    <md-content style="min-height: 90vh">
+        {{end}}
