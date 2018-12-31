@@ -84,6 +84,8 @@ func initRoutes() {
 	router.GET("/", dashboard)
 	router.GET("/users", usersList)
 	router.GET("/add_edit_user", addEditUser)
+	router.GET("/access", accessList)
+	router.GET("/add_edit_access", addEditAccess)
 }
 
 func isValidSession(c *gin.Context) bool {
@@ -103,7 +105,7 @@ func isValidSession(c *gin.Context) bool {
 
 func canAccess(userID uint, access string) bool {
 	ac := models.Access{}
-	db.Where("user_id=? AND access_type=?", userID, ac).First(&access)
+	db.Where("user_id=? AND access_type=?", userID, access).First(&ac)
 	if userID == 999999 || ac.ID > 0 {
 		return true
 	}
@@ -233,7 +235,7 @@ func hashPassword(password string) string {
 
 func validateUser(c models.User) bool {
 	var auth models.User
-	db.Where("username=? AND password=?", c.Username, c.Password).First(&auth)
+	db.Where("username=? AND password=?", c.Username, hashPassword(c.Password)).First(&auth)
 	if auth.ID > 0 {
 		glog.Infoln(time.Now(), "User Validated", c)
 		return true
@@ -345,6 +347,32 @@ func addEditUser(c *gin.Context) {
 		ID := getUserID(c)
 		if canAccess(ID, "Users") {
 			c.HTML(200, "add_edit_user", getTemplateObjects(c))
+		} else {
+			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
+		}
+	} else {
+		glog.Errorln(time.Now(), "Invalid Session", c)
+	}
+}
+
+func accessList(c *gin.Context) {
+	if isValidSession(c) {
+		ID := getUserID(c)
+		if canAccess(ID, "User Access") {
+			c.HTML(200, "access", getTemplateObjects(c))
+		} else {
+			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
+		}
+	} else {
+		glog.Errorln(time.Now(), "Invalid Session", c)
+	}
+}
+
+func addEditAccess(c *gin.Context) {
+	if isValidSession(c) {
+		ID := getUserID(c)
+		if canAccess(ID, "User Access") {
+			c.HTML(200, "add_edit_access", getTemplateObjects(c))
 		} else {
 			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
 		}

@@ -1,0 +1,146 @@
+{{template "header_secure" .}}
+<script>
+    angular.module('WayPay')
+        .controller('ctrl', ["store", "$mdSidenav", "$http", "$mdToast", function (store, $mdSidenav, $http, $mdToast) {
+            var vm = this;
+            vm.isEditMode = false;
+            vm.waiting = true;
+            vm.access = {};
+            vm.isSavePressed = false;
+
+            console.log("%cAdd Edit Access", "background: red; color: yellow; font-size: 40px;");
+            console.log("%c(c) 2017 - 2018 Loable Technologies https://loable.tech", "background: white; color: darkblue; font-size: 15px;");
+
+            // functions     
+            vm.getAllUsers = function () {
+                $http.get("/api/v1/users")
+                    .then(function (res) {
+                        console.debug(res);
+                        vm.users = res.data;
+                        vm.waiting = false;
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        vm.waiting = false;
+                    });
+            };
+
+            vm.save = function () {
+                vm.waiting = true;
+                vm.isSavePressed = true;
+                vm.access.User = vm.user;
+                vm.access.UserID = vm.user.ID;
+                vm.access.AccessType = vm.accesstype;
+                console.log(vm.access);
+                if (!vm.isEditMode) {
+                    $http.post("/api/v1/access", vm.access)
+                        .then(function (res) {
+                            console.debug(res);
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent("Access Data Saved")
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                            vm.cancel();
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            vm.waiting = false;
+                            vm.isSavePressed = false;
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent(error.data.message.toUpperCase())
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                        });
+                } else {
+                    $http.put("/api/v1/access", vm.access)
+                        .then(function (res) {
+                            console.debug(res);
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent("Access Data Saved")
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                            vm.cancel();
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            vm.waiting = false;
+                            vm.isSavePressed = false;
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent(error.data.message.toUpperCase())
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                        });
+                }
+            };
+
+            vm.cancel = function () {
+                vm.waiting = true;
+                store.set("access", null);
+                window.open(store.get("prev"), "_self");
+            };
+            // entry point
+            vm.getAllUsers();
+            vm.waiting = false;
+        }]);
+</script>
+<div layout="column" layout-align="center center" layout-fill="layout-fill" style="margin-top:40px;" ng-cloak ng-controller="ctrl as vm">
+    <md-progress-linear md-mode="indeterminate" ng-show="vm.waiting"></md-progress-linear>
+    <div layout="column" md-whiteframe="10" style="width: 98%;" ng-hide="vm.waiting">
+        <md-toolbar layout="row">
+            <h2 class="md-toolbar-tools">
+                <span>Add User Access</span>
+            </h2>
+        </md-toolbar>
+        <md-content layout="column" class="md-padding">
+            <form name="frm">
+                <div layout="column" class="md-padding" layout-wrap layout-align="center center">                    
+                    <div layout-gt-sm="row" class="layout-gt-sm-row" style="width: 100%;">
+                        User
+                        <div layout="row" layout-align="end center">
+                            <select id="users" name="users" style="width: 100%" ng-model="vm.user">
+                                <option ng-repeat="o in vm.users" ng-value="o">{[o.Username]}</option>
+                            </select>
+                            <script>
+                                $(document).ready(function() {
+                                    $('#users').select2();
+                                });
+                            </script>
+                        </div>
+                    </div>
+                    <div layout-gt-sm="row" class="layout-gt-sm-row" style="width: 100%;">
+                        Access Type
+                        <div layout="row" layout-align="end center">
+                            <select id="accesstypes" name="accesstypes" style="width: 100%" ng-model="vm.accesstype">
+                                <option value="Users">Users</option>
+                                <option value="User Access">User Access</option>
+                                <option value="Network Usage">Network Usage</option>
+                                <option value="Vouchers">Vouchers</option>
+                                <option value="Sales">Sales</option>
+                                <option value="Settings">Settings</option>
+                            </select>
+                            <script>
+                                $(document).ready(function() {
+                                    $('#accesstypes').select2();
+                                });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+                <md-divider></md-divider>
+                <div layout="row" layout-align="end center">
+                    <md-button class="md-raised md-primary" ng-disabled="frm.$invalid || vm.isSavePressed" ng-click="vm.save()">Save</md-button>
+                    <md-button class="md-warn" ng-click="vm.cancel()">Cancel</md-button>
+                </div>
+            </form>
+        </md-content>
+    </div>
+</div>
+{{template "footer_secure"}}
