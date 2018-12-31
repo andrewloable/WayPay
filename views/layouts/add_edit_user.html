@@ -1,0 +1,118 @@
+{{template "header_secure" .}}
+<script>
+    angular.module('WayPay')
+        .controller('ctrl', ["store", "$mdSidenav", "$http", "$mdToast", function (store, $mdSidenav, $http, $mdToast) {
+            var vm = this;
+            vm.isEditMode = false;
+            vm.waiting = true;
+            vm.user = {};
+            vm.isSavePressed = false;
+
+            console.log("%cAdd Edit User", "background: red; color: yellow; font-size: 40px;");
+            console.log("%c(c) 2017 - 2018 Loable Technologies https://loable.tech", "background: white; color: darkblue; font-size: 15px;");
+
+            // functions          
+            vm.save = function () {
+                vm.waiting = true;
+                vm.isSavePressed = true;
+                // Set default values
+                vm.user.IsEnabled = true;
+                console.log(vm.user);
+                if (!vm.isEditMode) {
+                    $http.post("/api/v1/users", vm.user)
+                        .then(function (res) {
+                            console.debug(res);
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent("User Data Saved")
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                            vm.cancel();
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            vm.waiting = false;
+                            vm.isSavePressed = false;
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent(error.data.message.toUpperCase())
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                        });
+                } else {
+                    $http.put("/api/v1/users", vm.user)
+                        .then(function (res) {
+                            console.debug(res);
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent("User Data Saved")
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                            vm.cancel();
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            vm.waiting = false;
+                            vm.isSavePressed = false;
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent(error.data.message.toUpperCase())
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                        });
+                }
+            };
+
+            vm.cancel = function () {
+                vm.waiting = true;
+                store.set("user", null);
+                window.open(store.get("prev"), "_self");
+            };
+            // entry point
+            vm.waiting = false;
+        }]);
+</script>
+<div layout="column" layout-align="center center" layout-fill="layout-fill" style="margin-top:40px;" ng-cloak ng-controller="ctrl as vm">
+    <md-progress-linear md-mode="indeterminate" ng-show="vm.waiting"></md-progress-linear>
+    <div layout="column" md-whiteframe="10" style="width: 98%;" ng-hide="vm.waiting">
+        <md-toolbar layout="row">
+            <h2 class="md-toolbar-tools">
+                <span>Add User</span>
+            </h2>
+        </md-toolbar>
+        <md-content layout="column" class="md-padding">
+            <form name="frm">
+                <div layout="column" class="md-padding" layout-wrap layout-align="center center">                    
+                    <div layout-gt-sm="row" class="layout-gt-sm-row" style="width: 100%;">
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm>
+                            <label>User Name</label>
+                            <input ng-model="vm.user.Username" name="Username" md-maxlength="100" ng-disabled="vm.isEditMode" required>
+                            <div ng-messages="frm.Username.$error">
+                                <div ng-message="required">This is required</div>
+                                <div ng-message="md-maxlength">Number of characters exceeded</div>
+                            </div>
+                        </md-input-container>
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm>
+                            <label>Password</label>
+                            <input ng-model="vm.user.Password" name="Password" type="password" md-maxlength="100" required>
+                            <div ng-messages="frm.Password.$error">
+                                <div ng-message="required">This is required</div>
+                                <div ng-message="md-maxlength">Number of characters exceeded</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                </div>
+                <md-divider></md-divider>
+                <div layout="row" layout-align="end center">
+                    <md-button class="md-raised md-primary" ng-disabled="frm.$invalid || vm.isSavePressed" ng-click="vm.save()">Save</md-button>
+                    <md-button class="md-warn" ng-click="vm.cancel()">Cancel</md-button>
+                </div>
+            </form>
+        </md-content>
+    </div>
+</div>
+{{template "footer_secure"}}

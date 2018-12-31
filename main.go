@@ -11,6 +11,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"loable.tech/WayPay/apicontrollers"
 	"loable.tech/WayPay/models"
 	"loable.tech/WayPay/viewcontrollers"
 )
@@ -30,6 +31,7 @@ func main() {
 	router := gin.Default()
 	models.Initialize(db)
 	viewcontrollers.Initialize(config, router, db)
+	apicontrollers.Initialize(config, router, db)
 
 	session.SecretKey = config.CookieSecretKey
 	session.JwtTokenName = "__app__"
@@ -40,5 +42,5 @@ func main() {
 	router.Static("/assets", "./static")
 
 	glog.Flush()
-	router.Run(":80")
+	router.Run(":8080")
 }

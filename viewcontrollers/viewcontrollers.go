@@ -83,11 +83,18 @@ func initRoutes() {
 	router.POST("/login", validateLogin)
 	router.GET("/", dashboard)
 	router.GET("/users", usersList)
+	router.GET("/add_edit_user", addEditUser)
 }
 
 func isValidSession(c *gin.Context) bool {
 	username, err := session.ValidateJWTToken(c)
 	if err == nil && username != "" {
+		sID, _ := session.GetString(c, "ID")
+		ID, _ := strconv.ParseUint(sID, 10, 64)
+		if ID == 0 {
+			c.Redirect(http.StatusSeeOther, "/login")
+			return false
+		}
 		return true
 	}
 	c.Redirect(http.StatusSeeOther, "/login")
@@ -97,7 +104,9 @@ func isValidSession(c *gin.Context) bool {
 func canAccess(userID uint, access string) bool {
 	ac := models.Access{}
 	db.Where("user_id=? AND access_type=?", userID, ac).First(&access)
-
+	if userID == 999999 || ac.ID > 0 {
+		return true
+	}
 	return false
 }
 
@@ -119,7 +128,6 @@ func getUserByID(ID uint) models.User {
 
 func generateMenu(user models.User) []models.MenuItem {
 	var menu []models.MenuItem
-	fmt.Println(user)
 	if user.Username == config.AdminUserName || canAccess(user.ID, "Users") {
 		m := models.MenuItem{
 			Name: "Users",
@@ -167,20 +175,23 @@ func generateMenu(user models.User) []models.MenuItem {
 		}
 		menu = append(menu, m)
 	}
-
 	return menu
 }
 
 func getTemplateObjects(c *gin.Context) gin.H {
 	sID, _ := session.GetString(c, "ID")
-	fmt.Println(sID)
 	ID, _ := strconv.ParseUint(sID, 10, 64)
 	user := getUserByID(uint(ID))
 	menu := generateMenu(user)
-	fmt.Println(menu)
+	if len(menu) > 0 {
+		retval := gin.H{
+			"user": user,
+			"menu": menu,
+		}
+		return retval
+	}
 	retval := gin.H{
 		"user": user,
-		"menu": menu,
 	}
 	return retval
 }
@@ -190,11 +201,19 @@ func getTemplateObjectsWithMessage(c *gin.Context, msg string) gin.H {
 	ID, _ := strconv.ParseUint(sID, 10, 64)
 	user := getUserByID(uint(ID))
 	menu := generateMenu(user)
+	if len(menu) > 0 {
+		retval := gin.H{
+			"hasError": true,
+			"message":  msg,
+			"user":     user,
+			"menu":     menu,
+		}
+		return retval
+	}
 	retval := gin.H{
 		"hasError": true,
 		"message":  msg,
 		"user":     user,
-		"menu":     menu,
 	}
 	return retval
 }
@@ -303,6 +322,8 @@ func dashboard(c *gin.Context) {
 	if isValidSession(c) {
 		c.HTML(200, "dashboard", getTemplateObjects(c))
 		return
+	} else {
+		c.HTML(http.StatusTemporaryRedirect, "login", nil)
 	}
 }
 
@@ -311,6 +332,19 @@ func usersList(c *gin.Context) {
 		ID := getUserID(c)
 		if canAccess(ID, "Users") {
 			c.HTML(200, "users", getTemplateObjects(c))
+		} else {
+			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
+		}
+	} else {
+		glog.Errorln(time.Now(), "Invalid Session", c)
+	}
+}
+
+func addEditUser(c *gin.Context) {
+	if isValidSession(c) {
+		ID := getUserID(c)
+		if canAccess(ID, "Users") {
+			c.HTML(200, "add_edit_user", getTemplateObjects(c))
 		} else {
 			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
 		}
