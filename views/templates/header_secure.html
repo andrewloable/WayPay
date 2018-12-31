@@ -79,17 +79,11 @@
                         <div layout="column">
                             <md-button class="md-raised md-primary" flex ng-click="app.Navigate('/')">Dashboard</md-button>
                         </div>
-                        <uib-accordion close-others="true">
-                            {{range .menu}}
-                            <div uib-accordion-group class="panel-default" heading="{{.Group}}">
-                                {{range .Items}}
-                                <div layout="column">
-                                    <md-button class="md-raised md-primary" ng-click="app.Navigate('{{.Path}}')">{{.Name}}</md-button>
-                                </div>
-                                {{end}}
-                            </div>
-                            {{end}}
-                        </uib-accordion>
+                        {{range .menu}}
+                        <div layout="column">
+                            <md-button class="md-raised md-primary" ng-click="app.Navigate('{{.Path}}')">{{.Name}}</md-button>
+                        </div>
+                        {{end}}
                     </md-content>
                 </md-sidenav>
             </div> {{end}}

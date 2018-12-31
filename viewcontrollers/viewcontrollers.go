@@ -82,6 +82,7 @@ func initRoutes() {
 	router.GET("/login", login)
 	router.POST("/login", validateLogin)
 	router.GET("/", dashboard)
+	router.GET("/users", usersList)
 }
 
 func isValidSession(c *gin.Context) bool {
@@ -100,18 +101,86 @@ func canAccess(userID uint, access string) bool {
 	return false
 }
 
+func getUserID(c *gin.Context) uint {
+	sID, _ := session.GetString(c, "ID")
+	ID, _ := strconv.ParseUint(sID, 10, 64)
+	return uint(ID)
+}
+
 func getUserByID(ID uint) models.User {
 	var obj models.User
 	db.Where("ID=?", ID).First(&obj)
+	if ID == 999999 {
+		obj.Username = "root"
+		obj.ID = 999999
+	}
 	return obj
+}
+
+func generateMenu(user models.User) []models.MenuItem {
+	var menu []models.MenuItem
+	fmt.Println(user)
+	if user.Username == config.AdminUserName || canAccess(user.ID, "Users") {
+		m := models.MenuItem{
+			Name: "Users",
+			Path: "/users",
+		}
+		menu = append(menu, m)
+	}
+
+	if user.Username == config.AdminUserName || canAccess(user.ID, "User Access") {
+		m := models.MenuItem{
+			Name: "Access",
+			Path: "/access",
+		}
+		menu = append(menu, m)
+	}
+
+	if user.Username == config.AdminUserName || canAccess(user.ID, "Network Usage") {
+		m := models.MenuItem{
+			Name: "Network Usage",
+			Path: "/networkusage",
+		}
+		menu = append(menu, m)
+	}
+
+	if user.Username == config.AdminUserName || canAccess(user.ID, "Vouchers") {
+		m := models.MenuItem{
+			Name: "Vouchers",
+			Path: "/vouchers",
+		}
+		menu = append(menu, m)
+	}
+
+	if user.Username == config.AdminUserName || canAccess(user.ID, "Sales") {
+		m := models.MenuItem{
+			Name: "Sales",
+			Path: "/sales",
+		}
+		menu = append(menu, m)
+	}
+
+	if user.Username == config.AdminUserName || canAccess(user.ID, "Settings") {
+		m := models.MenuItem{
+			Name: "Settings",
+			Path: "/settings",
+		}
+		menu = append(menu, m)
+	}
+
+	return menu
 }
 
 func getTemplateObjects(c *gin.Context) gin.H {
 	sID, _ := session.GetString(c, "ID")
+	fmt.Println(sID)
 	ID, _ := strconv.ParseUint(sID, 10, 64)
 	user := getUserByID(uint(ID))
+	menu := generateMenu(user)
+	fmt.Println(menu)
 	retval := gin.H{
 		"user": user,
+		"menu": menu,
 	}
 	return retval
 }
@@ -120,10 +189,12 @@ func getTemplateObjectsWithMessage(c *gin.Context, msg string) gin.H {
 	sID, _ := session.GetString(c, "ID")
 	ID, _ := strconv.ParseUint(sID, 10, 64)
 	user := getUserByID(uint(ID))
+	menu := generateMenu(user)
 	retval := gin.H{
 		"hasError": true,
 		"message":  msg,
 		"user":     user,
+		"menu":     menu,
 	}
 	return retval
 }
@@ -162,7 +233,7 @@ func getUserByUserName(username string) (models.User, error) {
 
 	if username == config.AdminUserName {
 		user.Username = config.AdminUserName
-		user.ID = 0
+		user.ID = 999999
 		return user, nil
 	}
 
@@ -215,6 +286,14 @@ func validateLogin(c *gin.Context) {
 		return
 	}
 
+	session.Set(c, "ID", strconv.FormatUint(uint64(authUser.ID), 10))
+	session.Set(c, "Username", authUser.Username)
+	fmt.Printf("%+v\n-------------------------\n", user)
+	Username, _ := session.GetString(c, "Username")
+	fmt.Println("Username: ", Username)
+	ID, _ := session.GetString(c, "ID")
+	fmt.Println("ID: ", ID)
+
 	// redirect to home screen
 	c.Redirect(http.StatusSeeOther, "/")
 	return
@@ -224,5 +303,18 @@ func dashboard(c *gin.Context) {
 	if isValidSession(c) {
 		c.HTML(200, "dashboard", getTemplateObjects(c))
 		return
+	}
+}
+
+func usersList(c *gin.Context) {
+	if isValidSession(c) {
+		ID := getUserID(c)
+		if canAccess(ID, "Users") {
+			c.HTML(200, "users", getTemplateObjects(c))
+		} else {
+			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
+		}
+	} else {
+		glog.Errorln(time.Now(), "Invalid Session", c)
 	}
 }

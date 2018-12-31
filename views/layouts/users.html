@@ -1,0 +1,121 @@
+{{template "header_secure" .}}
+<script>
+    angular.module('WayPay')
+        .controller('ctrl', ["store", "$mdSidenav", "$http", "$mdToast", function (store, $mdSidenav, $http, $mdToast) {
+            var vm = this;
+            vm.showFilter = false;
+            vm.list = [];
+            vm.waiting = true;
+            vm.query = {
+                order: 'Username',
+                limit: 10,
+                page: 1,
+                filter: ""
+            };
+
+            console.log("%cUsers", "background: red; color: yellow; font-size: 40px;");
+            console.log("%c(c) 2017 - 2018 Loable Technologies https://loable.tech", "background: white; color: darkblue; font-size: 15px;");
+
+            // functions
+            vm.getAllUsers = function () {
+                $http.get("/api/v1/users")
+                    .then(function (res) {
+                        console.debug(res);
+                        vm.list = res.data;
+                        vm.waiting = false;
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        vm.waiting = false;
+                    });
+            };
+
+            vm.addUser = function () {
+                vm.waiting = true;
+                store.set("prev", window.location.pathname);
+                window.open("/add_edit_user", "_self");
+            };
+
+            vm.deleteUser = function(obj){
+                vm.waiting = true;
+                $http.delete("/api/v1/users/" + obj.ID )
+                    .then(function (res) {
+                        console.debug(res);
+                        vm.getAllUsers();
+                        vm.waiting = false;
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        vm.waiting = false;
+                    });
+            };
+            
+            // entry point
+            vm.getAllUsers();
+        }]);
+</script>
+<div layout="column" layout-align="center center" layout-fill="layout-fill" style="margin-top:40px;" ng-cloak ng-controller="ctrl as vm">
+    <md-progress-linear md-mode="indeterminate" ng-show="vm.waiting"></md-progress-linear>
+    <div layout="column" md-whiteframe="10" style="width: 98%;" ng-hide="vm.waiting">
+        <md-toolbar layout="row">
+            <h2 class="md-toolbar-tools">
+                <span>Users</span>
+            </h2>
+            <div class="md-toolbar-tools">
+                <span flex></span>
+                <div layout="row" ng-show="vm.showFilter">
+                    <form flex name="filter-form">
+                        <input type="text" ng-model="vm.query.filter" placeholder="Search">
+                    </form>
+                    <md-button ng-click="vm.showFilter = false; vm.query.filter = ''">
+                        <md-icon md-svg-src="/assets/img/close.svg"></md-icon>
+                    </md-button>
+                </div>
+                <div layout="row" ng-show="!vm.showFilter">
+                    <md-button class="md-raised md-warn md-hue-3" ng-click="vm.showFilter = true">
+                        <md-icon md-svg-src="/assets/img/magnify.svg"></md-icon>
+                    </md-button>
+                    <md-button class="md-raised md-warn md-hue-3" ng-click="vm.addUser()">Add User</md-button>
+                </div>
+            </div>
+
+        </md-toolbar>
+        <md-content layout="column" class="md-padding">
+            <div ng-if="!vm.list || vm.list.length < 1">
+                <h4>No Records Found</h4>
+            </div>
+            <md-table-container ng-if="vm.list.length > 0">
+                <md-table-pagination md-limit="vm.query.limit" md-limit-options="[10, 50, 100]" md-page="vm.query.page" md-total="{[vm.list.length]}"
+                    md-page-select></md-table-pagination>
+                <table md-table>
+                    <thead md-head md-order="vm.query.order" md-on-reorder="vm.updateList">
+                        <tr md-row>
+                            <th md-column>Actions</th>
+                            <th md-column md-order-by="Username">Username</th>
+                        </tr>
+                    </thead>
+                    <tbody md-body>
+                        <tr md-row md-auto-select ng-repeat="o in vm.list | filter: vm.query.filter | orderBy: vm.query.order | limitTo: vm.query.limit : (vm.query.page - 1) * vm.query.limit">
+                            <td md-cell>
+                                <md-menu>
+                                    <md-button aria-label="More" class="md-icon-button" ng-click="$mdOpenMenu()">
+                                        <md-icon md-menu-origin md-svg-src="/assets/img/dots-vertical.svg"></md-icon>
+                                    </md-button>
+                                    <md-menu-content>
+                                        <md-menu-item>
+                                            <md-button ng-click="vm.deleteUser(o)">Delete User</md-button>
+                                        </md-menu-item>                                        
+                                    </md-menu-content>
+                                </md-menu>
+                            </td>
+                            <td md-cell>{[o.Username]}</td>                            
+                        </tr>
+                    </tbody>
+                </table>
+                <md-table-pagination md-limit="vm.query.limit" md-limit-options="[10, 50, 100]" md-page="vm.query.page" md-total="{[vm.list.length]}"
+                    md-page-select></md-table-pagination>
+            </md-table-container>
+        </md-content>
+    </div>
+</div>
+{{template "footer_secure"}}

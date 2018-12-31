@@ -43,6 +43,12 @@ type Access struct {
 	AccessType string
 }
 
+// MenuItem ...
+type MenuItem struct {
+	Name string
+	Path string
+}
+
 // Initialize ...
 func Initialize(db *gorm.DB) {
 	db.AutoMigrate(&User{})
