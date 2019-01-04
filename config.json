@@ -1,6 +1,6 @@
 {
     "AdminUserName": "root",
     "AdminPassword": "2d4fefb24cb83adbaba97fec1d393967957781943f5f24f22de1ad8d1b8b3504",
-    "DeviceSerial": "DeviceUniqueIDHere",
+    "DeviceSerial": "TEST001",
     "CookieSecretKey": "ReplaceCookieEncryptKey"
 }

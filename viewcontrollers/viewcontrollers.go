@@ -17,6 +17,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
 	"loable.tech/WayPay/models"
+	"loable.tech/WayPay/utils"
 )
 
 var config models.Config
@@ -35,13 +36,19 @@ func Initialize(c models.Config, eng *gin.Engine, d *gorm.DB) {
 func loadTemplates(r multitemplate.Renderer) multitemplate.Renderer {
 	// Load Not Secure Views
 	glog.Infoln("Load Not Secure Views")
-	nonSecureViews := []string{
+	nonSecureLogin := []string{
 		"views/layouts/login.html",
 		"views/templates/header_not_secure.html",
 		"views/templates/footer_not_secure.html",
 	}
 
-	r.AddFromFiles("login", nonSecureViews...)
+	nonSecurePublic := []string{
+		"views/layouts/public.html",
+		"views/templates/header_not_secure.html",
+		"views/templates/footer_not_secure.html",
+	}
+	r.AddFromFiles("login", nonSecureLogin...)
+	r.AddFromFiles("public", nonSecurePublic...)
 	glog.Infoln("Load Secure Views")
 	secureTemplates := []string{
 		"views/templates/header_secure.html",
@@ -55,7 +62,7 @@ func loadTemplates(r multitemplate.Renderer) multitemplate.Renderer {
 			return err
 		}
 
-		if strings.Contains(path, ".html") && !strings.Contains(path, "login.html") {
+		if strings.Contains(path, ".html") && !strings.Contains(path, "login.html") && !strings.Contains(path, "public.html") {
 			layouts = append(layouts, path)
 		}
 		return nil
@@ -68,10 +75,14 @@ func loadTemplates(r multitemplate.Renderer) multitemplate.Renderer {
 		files := append([]string{layout}, secureTemplates...)
 		// remove view layout dir and remove .html
 		name := strings.Replace(strings.Replace(layout, "views/layouts/", "", -1), ".html", "", -1)
-		glog.Infoln(name)
+		glog.Infoln("Secure Layout", name)
 		r.AddFromFiles(name, files...)
 	}
 	return r
+}
+
+func redirectIndex(c *gin.Context) {
+	c.Redirect(302, "http://10.1.1.1/public")
 }
 
 func initRoutes() {
@@ -79,13 +90,44 @@ func initRoutes() {
 	r = multitemplate.NewRenderer()
 	router.HTMLRender = r
 	r = loadTemplates(r)
+	// root hotspot detect
+	router.GET("/", redirectIndex)
+	// ios hotspot detect
+	// http://captive.apple.com/hotspot-detect.html
+	router.GET("/hotspot-detect.html", redirectIndex)
+	router.GET("/bag", redirectIndex)
+	// android hotspot detect
+	// http://google.com/generate_204
+	router.GET("/generate_204", redirectIndex)
+	// windows 10 hotspot detect
+	// http://www.msftconnecttest.com/connecttest.txt.
+	router.GET("/connecttest.txt", redirectIndex)
+	router.GET("/redirect", redirectIndex)
+	// windows mobile hotspot detect
+	// www.msftncsi.com/ncsi.txt
+	router.GET("/ncsi.txt", redirectIndex)
+	router.GET("/ppcrlcheck.srf", redirectIndex)
+	// client index
+	router.GET("/public", public)
+	// admin
 	router.GET("/login", login)
 	router.POST("/login", validateLogin)
-	router.GET("/", dashboard)
+	router.GET("/godmode", dashboard)
 	router.GET("/users", usersList)
 	router.GET("/add_edit_user", addEditUser)
 	router.GET("/access", accessList)
 	router.GET("/add_edit_access", addEditAccess)
+}
+
+func public(c *gin.Context) {
+	session.DeleteAllSession(c)
+	ipaddress := utils.GetIPAdress(c.Request)
+	macaddress := utils.GetMACAddress(ipaddress)
+
+	c.HTML(200, "public", gin.H{
+		"ipaddress":  ipaddress,
+		"macaddress": macaddress,
+	})
 }
 
 func isValidSession(c *gin.Context) bool {
@@ -324,9 +366,9 @@ func dashboard(c *gin.Context) {
 	if isValidSession(c) {
 		c.HTML(200, "dashboard", getTemplateObjects(c))
 		return
-	} else {
-		c.HTML(http.StatusTemporaryRedirect, "login", nil)
 	}
+	c.HTML(http.StatusTemporaryRedirect, "login", nil)
+	return
 }
 
 func usersList(c *gin.Context) {

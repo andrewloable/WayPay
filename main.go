@@ -13,8 +13,21 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"loable.tech/WayPay/apicontrollers"
 	"loable.tech/WayPay/models"
+	"loable.tech/WayPay/utils"
 	"loable.tech/WayPay/viewcontrollers"
 )
+
+func setInitalAccessSettings() {
+	utils.DropForwardPackets("wlan0", "eth0")
+	time.Sleep(500 * time.Millisecond)
+	utils.PostMasquerade("eth0")
+	time.Sleep(500 * time.Millisecond)
+	utils.RedirectAllToLocalServer()
+	time.Sleep(500 * time.Millisecond)
+	utils.StartTrafficShaping("wlan0")
+	time.Sleep(500 * time.Millisecond)
+	utils.LoadIPTables()
+}
 
 func main() {
 	flag.Parse()
@@ -28,19 +41,28 @@ func main() {
 		glog.Fatalln(time.Now(), "Database Initialization Error", err)
 	}
 	defer db.Close()
-	router := gin.Default()
+	httpsRouter := gin.Default()
+	httpRouter := gin.Default()
 	models.Initialize(db)
-	viewcontrollers.Initialize(config, router, db)
-	apicontrollers.Initialize(config, router, db)
+	viewcontrollers.Initialize(config, httpRouter, db)
+	apicontrollers.Initialize(config, httpRouter, db)
 
 	session.SecretKey = config.CookieSecretKey
 	session.JwtTokenName = "__app__"
 	session.DefaultSessionName = "__session__"
 	session.NewStore()
 
-	router.Use(gzip.Gzip(gzip.BestCompression))
-	router.Static("/assets", "./static")
+	httpRouter.Use(gzip.Gzip(gzip.BestCompression))
+	httpRouter.Static("/assets", "./static")
 
 	glog.Flush()
-	router.Run(":8080")
+
+	httpsRouter.GET("/", func(c *gin.Context) {
+		c.Redirect(302, "http://10.1.1.1/login")
+	})
+
+	setInitalAccessSettings()
+
+	go httpsRouter.Run(":443")
+	httpRouter.Run(":80")
 }

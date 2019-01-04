@@ -1,0 +1,42 @@
+{{template "header_not_secure" .}}
+<script>
+    angular.module('WayPay')
+        .controller('ctrl', ["$mdSidenav", "$mdToast", "$http", function ($mdSidenav, $mdToast, $http) {
+            var vm = this;
+            vm.ipaddress = {{.ipaddress}};
+            vm.macaddress = {{.macaddress}};
+            console.log("%cPublic", "background: red; color: yellow; font-size: 40px;");
+            console.log("%c(c) 2017 - 2018 Loable Technologies https://loable.tech", "background: white; color: darkblue; font-size: 15px;");
+
+            vm.test = function () {
+                $http.get("/api/v1/test")
+                    .then(function (res) {
+                        console.debug(res);
+                        vm.waiting = false;
+                        window.open("http://captive.apple.com/hotspot-detect.html", "_self");
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        vm.waiting = false;
+                    });
+            };
+        }]);
+</script>
+<div layout="column" layout-align="center center" layout-fill="layout-fill" ng-cloak ng-controller="ctrl as vm" style="margin-top:40px;">
+    <div layout="column" class="md-whiteframe-z1" style="max-width: 90%; width: 500px;">
+        <md-toolbar>
+            <h2 class="md-toolbar-tools">
+                <span>Public</span>                
+            </h2>
+        </md-toolbar>        
+        <md-content layout="column" class="md-padding">
+            <h4>{[vm.ipaddress]}</h4>
+            <h4>{[vm.macaddress]}</h4>
+            <div layout="row" layout-align="center center">
+                <md-button class="md-raised md-warn md-hue-3" ng-click="vm.test()">Test</md-button>
+            </div>
+            <md-divider></md-divider>
+        </md-content>
+    </div>
+</div>
+{{template "footer_not_secure"}}
