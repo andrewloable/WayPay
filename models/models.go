@@ -21,9 +21,14 @@ type Config struct {
 
 // ReadConfig ...
 func (c *Config) ReadConfig() {
-	file, err := ioutil.ReadFile("config.json")
+	file, err := ioutil.ReadFile("/boot/waypay.json")
 	if err != nil {
-		glog.Errorln(time.Now(), "Config Read Error")
+		file, err = ioutil.ReadFile("config.json")
+		if err != nil {
+			glog.Errorln(time.Now(), "Config Read Error")
+		} else {
+			glog.Infoln(time.Now(), "Default Config File Read Success")
+		}
 	} else {
 		glog.Infoln(time.Now(), "Config File Read Success")
 	}
@@ -66,10 +71,12 @@ type Voucher struct {
 // Rate ...
 type Rate struct {
 	gorm.Model
-	DeviceID    string
-	CreditRate  decimal.Decimal `sql:"type:decimal(20,8);"`
-	ClassID     string
-	NetworkRate string
+	DeviceID         string
+	CreditRate       decimal.Decimal `sql:"type:decimal(20,8);"`
+	NetworkRate      string
+	BurstNetworkRate string
+	RateName         string
+	ClassID          string
 }
 
 // NetworkUsage ...

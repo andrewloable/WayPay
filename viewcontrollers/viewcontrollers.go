@@ -82,23 +82,20 @@ func loadTemplates(r multitemplate.Renderer) multitemplate.Renderer {
 }
 
 func redirectIndex(c *gin.Context) {
-	c.Redirect(302, "http://10.1.1.1/public")
+	c.Redirect(302, "http://10.1.1.1/")
 }
 
 func initRoutes() {
-	fmt.Println("HASH 123", hashPassword("123"))
 	r = multitemplate.NewRenderer()
 	router.HTMLRender = r
 	r = loadTemplates(r)
-	// root hotspot detect
-	router.GET("/", redirectIndex)
 	// ios hotspot detect
 	// http://captive.apple.com/hotspot-detect.html
 	router.GET("/hotspot-detect.html", redirectIndex)
 	router.GET("/bag", redirectIndex)
 	// android hotspot detect
 	// http://google.com/generate_204
-	router.GET("/generate_204", redirectIndex)
+	router.GET("/generate_204", public)
 	// windows 10 hotspot detect
 	// http://www.msftconnecttest.com/connecttest.txt.
 	router.GET("/connecttest.txt", redirectIndex)
@@ -107,8 +104,8 @@ func initRoutes() {
 	// www.msftncsi.com/ncsi.txt
 	router.GET("/ncsi.txt", redirectIndex)
 	router.GET("/ppcrlcheck.srf", redirectIndex)
-	// client index
-	router.GET("/public", public)
+	// public
+	router.GET("/", public)
 	// admin
 	router.GET("/login", login)
 	router.POST("/login", validateLogin)
@@ -117,6 +114,8 @@ func initRoutes() {
 	router.GET("/add_edit_user", addEditUser)
 	router.GET("/access", accessList)
 	router.GET("/add_edit_access", addEditAccess)
+	router.GET("/rates", rateList)
+	router.GET("/add_edit_rate", addEditRate)
 }
 
 func public(c *gin.Context) {
@@ -148,6 +147,7 @@ func isValidSession(c *gin.Context) bool {
 func canAccess(userID uint, access string) bool {
 	ac := models.Access{}
 	db.Where("user_id=? AND access_type=?", userID, access).First(&ac)
+	//glog.Infoln("CAN ACCESS", userID, access, ac)
 	if userID == 999999 || ac.ID > 0 {
 		return true
 	}
@@ -212,6 +212,14 @@ func generateMenu(user models.User) []models.MenuItem {
 		menu = append(menu, m)
 	}
 
+	if user.Username == config.AdminUserName || canAccess(user.ID, "Rates") {
+		m := models.MenuItem{
+			Name: "Rates",
+			Path: "/rates",
+		}
+		menu = append(menu, m)
+	}
+
 	if user.Username == config.AdminUserName || canAccess(user.ID, "Settings") {
 		m := models.MenuItem{
 			Name: "Settings",
@@ -225,8 +233,11 @@ func generateMenu(user models.User) []models.MenuItem {
 func getTemplateObjects(c *gin.Context) gin.H {
 	sID, _ := session.GetString(c, "ID")
 	ID, _ := strconv.ParseUint(sID, 10, 64)
+	//glog.Infoln("ID", ID)
 	user := getUserByID(uint(ID))
+	//glog.Infoln("USER", user)
 	menu := generateMenu(user)
+	//glog.Infoln("MENU", menu)
 	if len(menu) > 0 {
 		retval := gin.H{
 			"user": user,
@@ -358,7 +369,7 @@ func validateLogin(c *gin.Context) {
 	fmt.Println("ID: ", ID)
 
 	// redirect to home screen
-	c.Redirect(http.StatusSeeOther, "/")
+	c.Redirect(http.StatusSeeOther, "/godmode")
 	return
 }
 
@@ -415,6 +426,32 @@ func addEditAccess(c *gin.Context) {
 		ID := getUserID(c)
 		if canAccess(ID, "User Access") {
 			c.HTML(200, "add_edit_access", getTemplateObjects(c))
+		} else {
+			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
+		}
+	} else {
+		glog.Errorln(time.Now(), "Invalid Session", c)
+	}
+}
+
+func rateList(c *gin.Context) {
+	if isValidSession(c) {
+		ID := getUserID(c)
+		if canAccess(ID, "Rates") {
+			c.HTML(200, "rates", getTemplateObjects(c))
+		} else {
+			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
+		}
+	} else {
+		glog.Errorln(time.Now(), "Invalid Session", c)
+	}
+}
+
+func addEditRate(c *gin.Context) {
+	if isValidSession(c) {
+		ID := getUserID(c)
+		if canAccess(ID, "Rates") {
+			c.HTML(200, "add_edit_rate", getTemplateObjects(c))
 		} else {
 			c.HTML(200, "dashboard", getTemplateObjectsWithMessage(c, "Access Not Allowed"))
 		}

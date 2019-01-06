@@ -1,0 +1,155 @@
+{{template "header_secure" .}}
+<script>
+    angular.module('WayPay')
+        .controller('ctrl', ["store", "$mdSidenav", "$http", "$mdToast", function (store, $mdSidenav, $http, $mdToast) {
+            var vm = this;
+            vm.isEditMode = false;
+            vm.waiting = true;
+            vm.rate = {};
+            vm.isSavePressed = false;
+
+            console.log("%cAdd Edit Rate", "background: red; color: yellow; font-size: 40px;");
+            console.log("%c(c) 2017 - 2018 Loable Technologies https://loable.tech", "background: white; color: darkblue; font-size: 15px;");
+
+            // functions          
+            vm.save = function () {
+                vm.waiting = true;
+                vm.isSavePressed = true;
+                // Set default values
+                vm.user.IsEnabled = true;
+                console.log(vm.rate);
+                if (!vm.isEditMode) {
+                    $http.post("/api/v1/rates", vm.rate)
+                        .then(function (res) {
+                            console.debug(res);
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent("User Data Saved")
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                            vm.cancel();
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            vm.waiting = false;
+                            vm.isSavePressed = false;
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent(error.data.message.toUpperCase())
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                        });
+                } else {
+                    $http.put("/api/v1/rates", vm.rate)
+                        .then(function (res) {
+                            console.debug(res);
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent("User Data Saved")
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                            vm.cancel();
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            vm.waiting = false;
+                            vm.isSavePressed = false;
+                            $mdToast.show(
+                                $mdToast.simple()
+                                    .textContent(error.data.message.toUpperCase())
+                                    .position('top right')
+                                    .hideDelay(5000)
+                            );
+                        });
+                }
+            };
+
+            vm.cancel = function () {
+                vm.waiting = true;
+                store.set("rate", null);
+                window.open(store.get("prev"), "_self");
+            };
+            // entry point
+            vm.waiting = false;
+        }]);
+</script>
+<div layout="column" layout-align="center center" layout-fill="layout-fill" style="margin-top:40px;" ng-cloak ng-controller="ctrl as vm">
+    <md-progress-linear md-mode="indeterminate" ng-show="vm.waiting"></md-progress-linear>
+    <div layout="column" md-whiteframe="10" style="width: 98%;" ng-hide="vm.waiting">
+        <md-toolbar layout="row">
+            <h2 class="md-toolbar-tools">
+                <span>Add Rate</span>
+            </h2>
+        </md-toolbar>
+        <md-content layout="column" class="md-padding">
+            <form name="frm">
+                <div layout="column" class="md-padding" layout-wrap layout-align="center center">                    
+                    <div layout-gt-sm="row" class="layout-gt-sm-row" style="width: 100%;">
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm>
+                            <label>Rate Name</label>
+                            <input ng-model="vm.rate.RateName" name="RateName" md-maxlength="100" ng-disabled="vm.isEditMode" required>
+                            <div ng-messages="frm.RateName.$error">
+                                <div ng-message="required">This is required</div>
+                                <div ng-message="md-maxlength">Number of characters exceeded</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                    <div layout-gt-sm="row" class="layout-gt-sm-row" style="width: 100%;">
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm>
+                            <label>Device ID</label>
+                            <input ng-model="vm.rate.DeviceID" name="DeviceID" md-maxlength="100" ng-disabled="vm.isEditMode" required>
+                            <div ng-messages="frm.DeviceID.$error">
+                                <div ng-message="required">This is required</div>
+                                <div ng-message="md-maxlength">Number of characters exceeded</div>
+                            </div>
+                        </md-input-container>
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm >
+                            <label>Credits Per Minute</label>
+                            <input ng-model="vm.rate.CreditRate" name="CreditRate" type="number" step="0.01" required>
+                            <div ng-messages="frm.CreditRate.$error">
+                                <div ng-message="required">This is required</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                    <div layout-gt-sm="row" class="layout-gt-sm-row" style="width: 100%;">
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm>
+                            <label>Network Rate</label>
+                            <md-select ng-model="vm.rate.NetworkRate" required >
+                                <md-option value="512kbit">Up to 512 Kbps</md-option>
+                                <md-option value="1mbit">Up to 1 Mbps</md-option>
+                                <md-option value="1.5mbit">Up to 1.5 Mbps</md-option>
+                                <md-option value="2mbit">Up to 2 Mbps</md-option>
+                                <md-option value="3mbit">Up to 3 Mbps</md-option>
+                                <md-option value="4mbit">Up to 4 Mbps</md-option>
+                                <md-option value="5mbit">Up to 5 Mbps</md-option>
+                                <md-option value="10mbit">Up to 10 Mbps</md-option>
+                            </md-select>
+                        </md-input-container>
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm>
+                            <label>Burst Network Rate</label>
+                            <md-select ng-model="vm.rate.BurstNetworkRate" required >
+                                <md-option value="512kbit">Up to 512 Kbps</md-option>
+                                <md-option value="1mbit">Up to 1 Mbps</md-option>
+                                <md-option value="1.5mbit">Up to 1.5 Mbps</md-option>
+                                <md-option value="2mbit">Up to 2 Mbps</md-option>
+                                <md-option value="3mbit">Up to 3 Mbps</md-option>
+                                <md-option value="4mbit">Up to 4 Mbps</md-option>
+                                <md-option value="5mbit">Up to 5 Mbps</md-option>
+                                <md-option value="10mbit">Up to 10 Mbps</md-option>
+                            </md-select>
+                        </md-input-container>
+                    </div>
+                </div>
+                <md-divider></md-divider>
+                <div layout="row" layout-align="end center">
+                    <md-button class="md-raised md-primary" ng-disabled="frm.$invalid || vm.isSavePressed" ng-click="vm.save()">Save</md-button>
+                    <md-button class="md-warn" ng-click="vm.cancel()">Cancel</md-button>
+                </div>
+            </form>
+        </md-content>
+    </div>
+</div>
+{{template "footer_secure"}}

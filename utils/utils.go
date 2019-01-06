@@ -62,36 +62,47 @@ func StartTrafficShaping(devInput string) error {
 	return nil
 }
 
-// SetTrafficClassRate ...
-func SetTrafficClassRate(devInput string, rate models.Rate) error {
+// AddTrafficClassRate ...
+func AddTrafficClassRate(devInput string, rate models.Rate) error {
 	out, err := exec.Command("/sbin/tc", "class", "add", "dev", devInput, "parent", "1:", "classid", "1:"+rate.ClassID, "htb", "rate", rate.NetworkRate).CombinedOutput()
 	if err != nil {
-		glog.Errorln("SetTrafficClassRate ERROR", err, string(out))
+		glog.Errorln("AddTrafficClassRate ERROR", err, string(out))
 		return err
 	}
-	glog.Infoln(time.Now(), "SetTrafficClassRate", string(out))
+	glog.Infoln(time.Now(), "AddTrafficClassRate", string(out))
 	return nil
 }
 
-// SetIPTrafficClass ...
-func SetIPTrafficClass(devInput string, rate models.Rate, ipaddress string) error {
+// AddIPTrafficLimit ...
+func AddIPTrafficLimit(devInput string, rate models.Rate, ipaddress string) error {
 	out, err := exec.Command("/sbin/tc", "filter", "add", "dev", devInput, "parent", "1:0", "protocol", "ip", "prio", "1", "u32", "match", "ip", "dst", ipaddress, "flowid", "1:"+rate.ClassID).CombinedOutput()
 	if err != nil {
-		glog.Errorln("SetIPTrafficClass ERROR", err, string(out))
+		glog.Errorln("AddIPTrafficLimit ERROR", err, string(out))
 		return err
 	}
-	glog.Infoln(time.Now(), "SetIPTrafficClass", string(out))
+	glog.Infoln(time.Now(), "AddIPTrafficLimit", string(out))
 	return nil
 }
 
-// RemoveIPTrafficClass ...
-func RemoveIPTrafficClass(devInput string) error {
-	out, err := exec.Command("/sbin/tc", "filter", "del", "dev", devInput, "parent", "1:0", "protocol", "ip", "prio", "1").CombinedOutput()
+// StopTrafficShaping ...
+func StopTrafficShaping(devInput string) error {
+	out, err := exec.Command("/sbin/tc", "qdisc", "del", "dev", devInput, "root").CombinedOutput()
 	if err != nil {
-		glog.Errorln("RemoveIPTrafficClass ERROR", err, string(out))
+		glog.Errorln("StopTrafficShaping ERROR", err, string(out))
 		return err
 	}
-	glog.Infoln(time.Now(), "RemoveIPTrafficClass", string(out))
+	glog.Infoln(time.Now(), "StopTrafficShaping", string(out))
+	return nil
+}
+
+// Reboot ...
+func Reboot(devInput string) error {
+	out, err := exec.Command("/sbin/reboot").CombinedOutput()
+	if err != nil {
+		glog.Errorln("Reboot ERROR", err, string(out))
+		return err
+	}
+	glog.Infoln(time.Now(), "Reboot", string(out))
 	return nil
 }
 
@@ -189,5 +200,16 @@ func AllowForwardMAC(macaddress string, devInput string, devOutput string) error
 		return err
 	}
 	glog.Infoln(time.Now(), "AllowForwarMAC", macaddress, string(out))
+	return nil
+}
+
+// RemoveForwardMAC ...
+func RemoveForwardMAC(macaddress string, devInput string, devOutput string) error {
+	out, err := exec.Command("/sbin/iptables", "-D", "FORWARD", "-i", devInput, "-o", devOutput, "-m", "mac", "--mac-source", macaddress, "-j", "ACCEPT").CombinedOutput()
+	if err != nil {
+		glog.Errorln("RemoveForwardMAC ERROR", err)
+		return err
+	}
+	glog.Infoln(time.Now(), "RemoveForwardMAC", macaddress, string(out))
 	return nil
 }

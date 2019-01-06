@@ -101,38 +101,27 @@
         </md-toolbar>
         <md-content layout="column" class="md-padding">
             <form name="frm">
-                <div layout="column" class="md-padding" layout-wrap layout-align="center center">                    
+                <div layout="column" class="md-padding" layout-wrap layout-align="center center">
                     <div layout-gt-sm="row" class="layout-gt-sm-row" style="width: 100%;">
-                        User
-                        <div layout="row" layout-align="end center">
-                            <select id="users" name="users" style="width: 100%" ng-model="vm.user">
-                                <option ng-repeat="o in vm.users" ng-value="o">{[o.Username]}</option>
-                            </select>
-                            <script>
-                                $(document).ready(function() {
-                                    $('#users').select2();
-                                });
-                            </script>
-                        </div>
-                    </div>
-                    <div layout-gt-sm="row" class="layout-gt-sm-row" style="width: 100%;">
-                        Access Type
-                        <div layout="row" layout-align="end center">
-                            <select id="accesstypes" name="accesstypes" style="width: 100%" ng-model="vm.accesstype">
-                                <option value="Users">Users</option>
-                                <option value="User Access">User Access</option>
-                                <option value="Network Usage">Network Usage</option>
-                                <option value="Vouchers">Vouchers</option>
-                                <option value="Sales">Sales</option>
-                                <option value="Settings">Settings</option>
-                            </select>
-                            <script>
-                                $(document).ready(function() {
-                                    $('#accesstypes').select2();
-                                });
-                            </script>
-                        </div>
-                    </div>
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm>
+                            <label>User</label>
+                            <md-select ng-model="vm.user" required>
+                                <md-option ng-repeat="o in vm.users" ng-value="o">{[o.Username]}</md-option>
+                            </md-select>
+                        </md-input-container>
+                        <md-input-container class="md-block flex-gt-sm" flex-gt-sm>
+                            <label>Network Rate</label>
+                            <md-select ng-model="vm.accesstype" required >
+                                <md-option value="Users">Users</md-option>
+                                <md-option value="User Access">User Access</md-option>
+                                <md-option value="Network Usage">Network Usage</md-option>
+                                <md-option value="Vouchers">Vouchers</md-option>
+                                <md-option value="Sales">Sales</md-option>
+                                <md-option value="Rates">Rates</md-option>
+                                <md-option value="Settings">Settings</md-option>
+                            </md-select>
+                        </md-input-container>
+                    </div>                                        
                 </div>
                 <md-divider></md-divider>
                 <div layout="row" layout-align="end center">
